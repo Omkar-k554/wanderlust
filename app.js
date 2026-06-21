@@ -1,14 +1,20 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const Listing = require("./models/listing.js");
-const app=express();
-app.use(express.urlencoded({ extended: true }));
-const methodOverride = require("method-override");
-app.use(methodOverride("_method"));
+const mongoose = require("mongoose"); 
 const path = require("path");
+const methodOverride = require("method-override");
 const ejsmate=require("ejs-mate");
+const Listing = require("./models/listing.js");
+
+const app=express();
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname,"public"))); 
+app.use(methodOverride("_method"));
+
 app.engine("ejs",ejsmate);
-app.use(express.static(path.join(__dirname,"/public")));  
+app.set("view engine","ejs");
+app.set("views", path.join(__dirname, "views"));
+
 async function main() {
     await mongoose.connect(`mongodb://127.0.0.1:27017/wanderlust`);
 }
@@ -35,18 +41,18 @@ app.listen(8080,()=>{
 //     res.send("its working now ");
 // });
 
-// app.get("/",(req,res)=>{
-//     res.send("working");
-// });
+app.get("/",(req,res)=>{
+    res.send("working");
+});
 
 //listing details
-app.get("/listing",async (req,res)=>{
+app.get("/listings",async (req,res)=>{
     const allListing = await Listing.find();
     res.render("listings/index.ejs",{allListing});
 });
 
 //render new list form
-app.get("/listing/new", async(req,res)=>{
+app.get("/listings/new", async(req,res)=>{
     res.render("listings/new.ejs");
 }); 
 
@@ -54,34 +60,34 @@ app.get("/listing/new", async(req,res)=>{
 app.post("/listings",async (req,res)=>{
     let newListing =  new Listing(req.body.listing);
     await newListing.save();
-    res.redirect("/listing");
+    res.redirect("/listings");
     
 });
 
 //show list 
-app.get("/listing/:id",async (req,res)=>{
+app.get("/listings/:id",async (req,res)=>{
     let {id} = req.params;
     const listing = await Listing.findById(id);
     res.render("listings/show.ejs",{listing});
 });
 
 //render list for edit
-app.get("/listing/:id/edit",async(req,res)=>{
+app.get("/listings/:id/edit",async(req,res)=>{
     let {id} = req.params;
     const listing = await Listing.findById(id);
     res.render("listings/edit.ejs",{listing});
 });
 
 //update list 
-app.put("/listing/:id",async(req,res)=>{
+app.put("/listings/:id",async(req,res)=>{
     let {id} = req.params;
     await Listing.findByIdAndUpdate(id,{...req.body.listing});
-    res.redirect(`/listing/${id}`);
+    res.redirect(`/listings/${id}`);
 });
 
 //delete list 
-app.delete("/listing/:id/delete",async(req,res)=>{
+app.delete("/listings/:id/",async(req,res)=>{
     let {id} =req.params;
     await Listing.findByIdAndDelete(id);
-    res.redirect("/listing");
+    res.redirect("/listings");
 });

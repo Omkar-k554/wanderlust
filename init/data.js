@@ -53,7 +53,7 @@ const sampleListings = [
       "Float above the crystal-clear lagoon of Bora Bora in this luxurious overwater bungalow with a glass floor and private deck.",
     image: {
       filename: "listingimage",
-      url: "https://images.unsplash.com/photo-1501109782957-d5be9e6b22af?w=800&auto=format&fit=crop&q=60",
+      url: "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&auto=format&fit=crop&q=60",
     },
     price: 7500,
     location: "Bora Bora",

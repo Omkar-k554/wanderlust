@@ -15,7 +15,7 @@ const listingSchema = new Schema({
         url: {
             type: String,
             default:
-                "https://www.istockphoto.com/photo/laptop-on-wooden-round-table-near-a-white-sofa-with-cushion-on-brown-carpet-in-gm2216217201-632908108",
+                "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=800&q=80",
         },
     },
     price:Number,
