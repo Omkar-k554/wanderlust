@@ -6,7 +6,10 @@ const listingSchema = new Schema({
         required:true,
     },
 
-    description:String,
+    description:{
+        type:String,
+        required:true,
+    },
     image: {
         filename: {
             type: String,
@@ -16,6 +19,7 @@ const listingSchema = new Schema({
             type: String,
             default:
                 "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=800&q=80",
+            
         },
     },
     price:Number,
