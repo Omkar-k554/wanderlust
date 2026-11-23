@@ -3,27 +3,30 @@ const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsmate=require("ejs-mate");
-const Listing = require("./models/listing.js");
 const { error } = require("console");
 const app=express();
-const wrapAsync=require("./utils/wrapAsync.js");
 const ExpressError=require("./utils/ExpressError.js");
-const {ListingSchema} = require("./ListingSchema.js");
+const session = require("express-session");
+const flash = require("connect-flash");
 
+const listings = require("./routes/listing.js");
+const reviews = require("./routes/review.js"); 
+
+const SessionOptions = {
+    secret:"mysupersecreatcode",
+    resave:false,
+    saveUninitialized:true,
+    cookie:{
+        expires:Date.now()+1*24*60*60*1000,
+        maxAge:1*24*60*60*1000,
+        httponly:true,
+    },
+};
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname,"public"))); 
 app.use(methodOverride("_method"));
-
-
-// //Midelware creation for access token 
-// app.use("/api",(req,res,next)=>{
-//     let {token} = req.query;
-//     if(token === "GiveAccess"){
-//         return next();
-//     }
-//     throw new Error("ACCESS DENIED");
-// });
-
+app.use(session(SessionOptions));
+app.use(flash());
 
 app.engine("ejs",ejsmate);
 app.set("view engine","ejs");
@@ -42,87 +45,29 @@ app.listen(8080,()=>{
     console.log("Server is listnig to the port no 8080");
 });
 
-// app.get("/testListing",async (req,res)=>{
-//     let sampleListing = new Listing({
-//         title:"My new villa",
-//         description:"By the beach",
-//         price:1200,
-//         location:"Calangute Goa",
-//         country:"India"
-//     });
-//     await sampleListing.save();
-//     console.log("samplea was tested");
-//     res.send("its working now ");
+
+// app.get("/",(req,res)=>{
+//     res.send("working");
+// });
+// app.get("/session-expressTest",(req,res)=>{
+//     let {name="Anonymus"} = req.query;
+//     req.session.name=name;
+//     res.send(name);
 // });
 
-app.get("/",(req,res)=>{
-    res.send("working");
+app.use((req,res,next)=>{
+    res.locals.success =req.flash("success");
+    res.locals.Error =req.flash("Error");
+    next();
 });
 
-let validateListing = (req,res,next)=>{
-    let {error} =  ListingSchema.validate(req.body);
-    if(error){
-        let errMsg= error.details.map((el)=>el.message).join(",");
-        throw new ExpressError(400,errMsg);
-    }else{
-        next();
-    }
-};
+app.get("/favicon.ico", (req, res) => res.status(204).end());
+app.use("/listings",listings);
+app.use("/listings/:id/reviews",reviews);
 
-
-
-//listing details
-app.get("/listings",wrapAsync(async(req,res)=>{
-    const allListing = await Listing.find();
-    res.render("listings/index.ejs",{allListing});
-}));
-
-//render new list form
-app.get("/listings/new", wrapAsync(async(req,res)=>{
-    res.render("listings/new.ejs");
-})); 
-
-// add new list
-app.post("/listings",
-    validateListing,
-    wrapAsync(async(req,res,next)=>{
-    let newListing =  new Listing(req.body.listing);
-    await newListing.save();
-    res.redirect("/listings");
-    })
-);
-
-//show list 
-app.get("/listings/:id",wrapAsync(async (req,res)=>{
-    let {id} = req.params;
-    const listing = await Listing.findById(id);
-    res.render("listings/show.ejs",{listing});
-}));
-
-//render list for edit
-app.get("/listings/:id/edit",wrapAsync(async(req,res)=>{
-    let {id} = req.params;
-    const listing = await Listing.findById(id);
-    res.render("listings/edit.ejs",{listing});
-}));
-
-//update list 
-app.put("/listings/:id",
-    validateListing,
-    wrapAsync(async(req,res)=>{
-    let {id} = req.params;
-    await Listing.findByIdAndUpdate(id,{...req.body.listing});
-    res.redirect(`/listings/${id}`);
-}));
-
-//delete list 
-app.delete("/listings/:id/",wrapAsync(async(req,res)=>{
-    let {id} =req.params;
-    await Listing.findByIdAndDelete(id);
-    res.redirect("/listings");
-}));
 
 app.all("*splat",(req,res,next)=>{
+    console.log("404 for:", req.method, req.originalUrl);
     next(new ExpressError(404,"Page not found!"));
 });
 
@@ -131,6 +76,5 @@ app.use((err,req,res,next)=>{
      console.log(err);
     let {statuscode=500,message="Somthing went wrong!"}=err;
     res.status(statuscode).render("Error.ejs",{message});
-
-    //res.status(statuscode).send(message);
 });
+
